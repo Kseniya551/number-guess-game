@@ -1,0 +1,163 @@
+
+import random
+
+def hint_result(check, yellow, orange):   
+    distance = abs(check)
+    if distance <= yellow:
+        return "yellow"
+    elif distance <= orange:
+        return "orange"
+    else:
+        return "red"
+
+def main():
+    print("Hi! Welcome to the Number Guessing Game.\n")
+    print("do you want to start a new game or to load your last game?(new/last)")
+    start_game = input().lower()
+    
+    difficulty = 1
+    num = 0
+    low = 1
+    high = 10
+    yellow = 1
+    orange = 2
+    red = 5
+    chance = 7
+    correct_count = 0
+    attempt = 0
+
+    if start_game == 'last':
+        try:
+            with open('progress.txt', 'r') as file:
+                lines = file.readlines()
+                if lines:
+                    last_game = lines[-1].strip()
+                    data = last_game.split(',')
+                    difficulty = int(data[0])
+                    num = int(data[1])
+                    low = int(data[2])
+                    high = int(data[3])
+                    yellow = int(data[4])
+                    orange = int(data[5])
+                    red = int(data[6])
+                    chance = int(data[7])
+                    correct_count = int(data[8])
+                    attempt = int(data[9])
+                    
+                    print(f"Game loaded successfully! Secret number was saved, let's continue.")
+                else:
+                    print("Saved file is empty. Starting a new game.")
+                    start_game = 'new'
+        except (FileNotFoundError, IndexError, ValueError):
+            print("No valid saved progress found. Starting a new game.")
+            start_game = 'new'
+
+    while True:
+        if start_game == 'new':
+            try:
+                difficulty = int(input("please enter a difficulty level\n 1. Easy \n 2. Medium \n 3. Hard \n 4. Extreme\n"))
+            except ValueError:
+                difficulty = 1
+                
+            if difficulty == 1:
+                num = random.randint(1, 10) 
+                low, high = 1, 10
+                yellow, orange, red = 1, 2, 5
+                chance = 7
+            elif difficulty == 2:
+                num = random.randint(1, 100) 
+                low, high = 1, 100
+                yellow, orange, red = 5, 10, 20
+                chance = 10
+            elif difficulty == 3:
+                num = random.randint(1, 1000)
+                low, high = 1, 1000
+                yellow, orange, red = 10, 20, 50
+                chance = 15
+            elif difficulty == 4:
+                num = random.randint(1, 10000)
+                low, high = 1, 10000
+                yellow, orange, red = 20, 50, 100
+                chance = 15
+            else:
+                print("invalid input starting easy level\n")
+                num = random.randint(1, 10) 
+                low, high = 1, 10
+                yellow, orange, red = 1, 2, 5
+                chance = 7
+            
+            
+
+        gc = 0                        
+        wrong_guess = 0
+
+        print(f"\nYou have {chance} chances to guess the number between {low} and {high}. Good Luck!")
+        print(f"yellow - close (around: {yellow}), orange - far (around: {orange}), red - really far (around or more: {red})\n")
+        print("if you want to exit at any time press -1\n")
+        
+        game_exited = False
+        
+        while gc < chance:
+            try:
+                guess = int(input('Enter your guess: '))
+            except ValueError:
+                print("Please enter a valid number.")
+                continue
+
+            if guess == -1:
+                print(f'Thanks for playing! The number was {num}.')
+                game_exited = True
+                break
+
+            if guess < 1 or guess > high:
+                wrong_guess += 1
+                if wrong_guess == 3:
+                    print(f'\nYou have entered invalid input {wrong_guess} times. Please be careful!\n')
+                elif wrong_guess == 5:
+                    print(f'\nYou have entered invalid input {wrong_guess} times. Please read carefully the instructions\n')
+                elif wrong_guess == 6:
+                    print(f'\nYou have entered invalid input {wrong_guess} times. This is your last warning!\n')
+                elif wrong_guess == 7:
+                    print(f'\nYou have entered invalid input {wrong_guess} times. Game over!')
+                    game_exited = True
+                    break
+                print(f'Invalid input. Please enter a number between {low} and {high}.\n')
+                continue
+            else:
+                gc += 1
+
+            if guess == num:
+                print(f'Correct! The number is {num}. You guessed it in {gc} attempts.')
+                correct_count += 1
+                attempt += 1
+                break
+            elif guess > num:
+                print('Too high! Try a lower number.')
+                hint = hint_result(num - guess, yellow, orange)
+                print(f'Hint: {hint}!')
+            elif guess < num:
+                print('Too low! Try a higher number.')
+                hint = hint_result(num - guess, yellow, orange)
+                print(f'Hint: {hint}!')
+        
+        if gc >= chance and guess != num and not game_exited:
+            print(f'Sorry! The number was {num}. Better luck next time.')
+            attempt += 1
+
+        print("\nDo you want to play again? (yes/no)")
+        play_again = input().lower()
+        if play_again != 'yes':
+            print("Thanks for playing!")
+            print("do you want to save your progress? (yes/no)")
+            save_progress = input().lower()
+            print(f'Your final score is: {correct_count} correct guesses out of {attempt} attempts.')
+            
+            if save_progress == 'yes':
+                with open('progress.txt', 'w') as file:
+                    file.write(f'{difficulty},{num},{low},{high},{yellow},{orange},{red},{chance},{correct_count},{attempt}\n')
+                print("Progress saved! goodbye!")
+            break
+        else:
+            start_game = 'new'
+
+main()
